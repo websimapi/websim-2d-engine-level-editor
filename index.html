@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Engine Level Editor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- File Name Editor -->
+    <div class="file-name-container">
+        <input type="text" id="fileName" value="Untitled Level" class="file-name-input">
+        <button id="newLevelBtn" class="new-level-btn">New Level</button>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Menu -->
+        <div class="left-menu" id="leftMenu">
+            <div class="menu-toggle" id="menuToggle">
+                <span class="arrow">←</span>
+            </div>
+            
+            <div class="menu-content" id="menuContent">
+                <!-- Tools Section -->
+                <div class="menu-section" draggable="true" data-section="tools">
+                    <h3>Tools</h3>
+                    <div class="tool-grid">
+                        <button id="handTool" class="tool-btn" title="Hand (Pan)">✋</button>
+                        <button id="selectTool" class="tool-btn" title="Select">⚡</button>
+                        <button id="placeBlockTool" class="tool-btn active" title="Place Block">🟩</button>
+                        <button id="removeBlockTool" class="tool-btn" title="Remove Block">❌</button>
+                        <button id="fillTool" class="tool-btn" title="Fill">🪣</button>
+                        <button id="colorDropperTool" class="tool-btn" title="Color Dropper">💧</button>
+                        <button id="placeAssetTool" class="tool-btn" title="Place Asset">📦</button>
+                        <button id="undoBtn" class="tool-btn" title="Undo">↶</button>
+                        <button id="redoBtn" class="tool-btn" title="Redo">↷</button>
+                        <button id="exportBtn" class="tool-btn" title="Export">💾</button>
+                        <button id="importBtn" class="tool-btn" title="Import">📁</button>
+                    </div>
+                </div>
+
+                <!-- Block Settings Section -->
+                <div class="menu-section" draggable="true" data-section="block-settings">
+                    <h3>Block Settings</h3>
+                    <div class="setting-group">
+                        <label>Block Type:</label>
+                        <select id="blockType">
+                            <option value="full">Full Block</option>
+                            <option value="half">Half Block</option>
+                            <option value="stair">Stair Block</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Orientation:</label>
+                        <select id="blockOrientation">
+                            <option value="north">North</option>
+                            <option value="south">South</option>
+                            <option value="east">East</option>
+                            <option value="west">West</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Block Color:</label>
+                        <input type="color" id="blockColor" value="#ffffff">
+                    </div>
+                    <div class="setting-group">
+                        <label>Grid Size:</label>
+                        <input type="number" id="gridSize" value="32" min="8" max="64">
+                    </div>
+                </div>
+
+                <!-- Asset Library Section -->
+                <div class="menu-section" draggable="true" data-section="asset-library">
+                    <h3>Asset Library</h3>
+                    <div class="upload-buttons">
+                        <button id="uploadModelBtn">Upload 3D Model</button>
+                        <button id="uploadTextureBtn">Upload Texture</button>
+                        <button id="generateTextureBtn">Generate Texture</button>
+                    </div>
+                    <div class="asset-list" id="assetList"></div>
+                </div>
+
+                <!-- Placed Assets Section -->
+                <div class="menu-section" draggable="true" data-section="placed-assets">
+                    <h3>Placed Assets</h3>
+                    <div class="placed-assets-list" id="placedAssetsList"></div>
+                </div>
+
+                <!-- Action History Section -->
+                <div class="menu-section" draggable="true" data-section="action-history">
+                    <h3>Action History</h3>
+                    <div class="history-list" id="historyList"></div>
+                </div>
+
+                <!-- Online Users Section -->
+                <div class="menu-section" draggable="true" data-section="online-users">
+                    <h3>Online Users</h3>
+                    <div class="users-count">Users: <span id="userCount">1</span></div>
+                    <div class="users-list" id="usersList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Viewport -->
+        <div class="viewport-container" id="viewportContainer">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- Right Panel (Hidden by default) -->
+        <div class="right-panel hidden" id="rightPanel">
+            <div class="panel-toggle right-toggle" id="rightPanelToggle">→</div>
+            <div class="panel-content" id="rightPanelContent"></div>
+        </div>
+
+        <!-- Bottom Panel (Hidden by default) -->
+        <div class="bottom-panel hidden" id="bottomPanel">
+            <div class="panel-toggle bottom-toggle" id="bottomPanelToggle">↑</div>
+            <div class="panel-content" id="bottomPanelContent"></div>
+        </div>
+    </div>
+
+    <!-- Debug Console -->
+    <div class="debug-console hidden" id="debugConsole">
+        <h4>Debug Console</h4>
+        <div class="debug-content" id="debugContent"></div>
+    </div>
+
+    <!-- File Input (Hidden) -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+    <input type="file" id="modelInput" accept=".gltf,.glb" style="display: none;">
+    <input type="file" id="textureInput" accept="image/*" style="display: none;">
+
+    <!-- Texture Generation Modal -->
+    <div class="modal hidden" id="textureModal">
+        <div class="modal-content">
+            <h3>Generate Texture</h3>
+            <div class="modal-body">
+                <label>Texture Description:</label>
+                <textarea id="texturePrompt" placeholder="Describe the texture you want to generate..."></textarea>
+                <div class="texture-settings">
+                    <label>Size:</label>
+                    <select id="textureSize">
+                        <option value="512">512x512</option>
+                        <option value="1024" selected>1024x1024</option>
+                        <option value="2048">2048x2048</option>
+                    </select>
+                    <label>Type:</label>
+                    <select id="textureType">
+                        <option value="diffuse">Diffuse</option>
+                        <option value="normal">Normal Map</option>
+                        <option value="metallic">Metallic</option>
+                        <option value="roughness">Roughness</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="generateTextureConfirm">Generate</button>
+                <button id="generateTextureCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Maps -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://esm.sh/three@0.165.0",
+            "three/examples/jsm/": "https://esm.sh/three@0.165.0/examples/jsm/",
+            "nipplejs": "https://esm.sh/nipplejs@0.10.1"
+        }
+    }
+    </script>
+
+    <!-- Module Scripts -->
+    <script type="module" src="renderer-manager.js"></script>
+    <script type="module" src="ui-controls.js"></script>
+    <script type="module" src="assets.js"></script>
+    <script type="module" src="file-manager.js"></script>
+    <script type="module" src="block-tools.js"></script>
+    <script type="module" src="action-history.js"></script>
+    <script type="module" src="multiplayer-manager.js"></script>
+    <script type="module" src="init.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
